@@ -17,6 +17,7 @@ The features to be implemented are as follows:
 + Can Test account be logged into?
 + Cannot change password or email
 + Ability to view the following statistics: MyBB Version, PHP Version, SQL Engine
++ Utilizes Uses Group Permissions to toggle: Posting, Reputation, Signatures, Avatars, Private Messaging
 
 Bugs, Suggestions and Comments
 -----------
