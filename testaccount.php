@@ -1,8 +1,8 @@
 <?php 
 
 define('IN_MYBB', 1); require "./global.php";
-
-if($mybb->get_input('action') != 'statistics' && $mybb->settings['testaccount_statistics'] != 1)
+$lang->load('testaccount');
+if($mybb->get_input('action') != 'statistics' || $mybb->settings['testaccount_statistics'] != 1)
 {
 	return;
 }
@@ -31,7 +31,7 @@ $phpv = phpversion();
 $databaseengine = $db->short_title;
 $dbi = $db->get_version();
 
- $database = $databaseengine .' ' . $dbi;
+$database = $databaseengine .' '. $dbi;
 
 eval("\$html = \"".$templates->get("testaccount_statistics")."\";"); 
 
