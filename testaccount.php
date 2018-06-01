@@ -2,7 +2,7 @@
 
 define('IN_MYBB', 1); require "./global.php";
 
-if($mybb->get_input('action') != 'statistics')
+if($mybb->get_input('action') != 'statistics' && $mybb->settings['testaccount_statistics'] != 1)
 {
 	return;
 }
