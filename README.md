@@ -8,7 +8,7 @@ Author: [Wires (AndreRl)](https://oseax.com)
 General
 -----------
 
-MyBB Plugin - Allows forum administrators to give out a test account with very limited permissions.
+MyBB Plugin - Allows forum administrators to give out a test account with very limited permissions. Permissions given within the plugin will override usergroup permissions.
 
 Planned Features
 -----------
