@@ -51,7 +51,7 @@ $setting_group = array(
     'name' => 'testaccount',
     'title' => 'Test Account Settings',
     "description" => "Toggle Test Account features. 
-	Note: Settings configured here will override usergroup settings.",
+	Note: Settings configured here may override usergroup settings.",
     'disporder' => 1, 
     'isdefault' => 0
 );
