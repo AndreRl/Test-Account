@@ -31,10 +31,21 @@ $plugins->add_hook('newthread_do_newthread_start', 'testaccount_permission');
 
 function testaccount_info()
 {
+global $db, $mybb, $lang;
+
+$lang->load('testaccount');
+
+	$query = $db->simple_select("users", "*", "username = 'test'");
+	$usercheck = $db->fetch_field($query, "uid");
+	if(isset($usercheck) && $mybb->get_input('module') == 'config-plugins' && !isset($mybb->settings['testaccount_enable']))
+	{
+	$testaccountnote = "<b>$lang->testaccount_installnote</b>";
+	}
 	return array(
         "name"  => "Test Account",
-        "description"=> "Allows forum administrators to give out a test account with very limited permissions.<br /><br />
-		<span style=\"color: red;\">Note: Settings configured here will override usergroup permissions.</span>",
+        "description"=> $lang->testaccount_desc."<br /><br />
+		<span style=\"color: red;\">$lang->testaccount_descnote<br />
+		$testaccountnote</span>",
         "website"        => "https://oseax.com",
         "author"        => "Wires <i>(AndreRl)</i>",
         "authorsite"    => "https://oseax.com",
@@ -47,13 +58,14 @@ function testaccount_info()
 
 function testaccount_install()
 {
-global $db, $mybb;
+global $db, $mybb, $lang;
+
+$lang->load('testaccount');
 
 $setting_group = array(
     'name' => 'testaccount',
     'title' => 'Test Account Settings',
-    "description" => "Toggle Test Account features. 
-	Note: Settings configured here may override usergroup settings.",
+    "description" => $lang->testaccount_settinggroupdesc,
     'disporder' => 1, 
     'isdefault' => 0
 );
@@ -63,56 +75,56 @@ $gid = $db->insert_query("settinggroups", $setting_group);
 $setting_array = array(
 
     'testaccount_enable' => array(
-        'title' => 'Enable Plugin',
-        'description' => 'Enable Test Account Plugin along with its features.',
+        'title' => $lang->testaccount_enable,
+        'description' => $lang->testaccount_enabledesc,
         'optionscode' => 'yesno',
         'value' => 1, 
         'disporder' => 1
     ),
 
     'testaccount_unlock' => array(
-        'title' => 'Unlock Test Account',
-        'description' => 'Can the Test account be logged into?',
+        'title' => $lang->testaccount_unlock,
+        'description' => $lang->testaccount_unlockdesc,
         'optionscode' => "yesno",
         'value' => 0,
         'disporder' => 2
     ),
 	
     'testaccount_posting' => array(
-        'title' => 'Post Restriction',
-        'description' => 'Can Test account post?',
+        'title' => $lang->testaccount_posting,
+        'description' => $lang->testaccount_postingdesc,
         'optionscode' => 'yesno',
         'value' => 1,
         'disporder' => 4
     ),
 	
     'testaccount_sigavatar' => array(
-        'title' => 'Signature & Avatar Restriction',
-        'description' => 'Can Test account use Signatures and Avatars?',
+        'title' => $lang->testaccount_sigavatar,
+        'description' => $lang->testaccount_sigavatardesc,
         'optionscode' => "select\n0=Signature\n1=Avatar\n2=Both\n3=None",
         'value' => 3,
         'disporder' => 5
     ),
 	
     'testaccount_pms' => array(
-        'title' => 'Toggle PMs',
-        'description' => 'Can Test account use Private Message system?',
+        'title' => $lang->testaccount_pms,
+        'description' => $lang->testaccount_pmsdesc,
         'optionscode' => "yesno",
         'value' => 2,
         'disporder' => 6
     ),
 	
     'testaccount_reputation' => array(
-        'title' => 'Toggle Reputation',
-        'description' => 'Can Test account use Reputation system?',
+        'title' => $lang->testaccount_reputation,
+        'description' => $lang->testaccount_reputationdesc,
         'optionscode' => "yesno",
         'value' => 2,
         'disporder' => 7
     ),
 	
     'testaccount_statistics' => array(
-        'title' => 'Enable Statistics',
-        'description' => 'Enable the statistics and debugging information.',
+        'title' => $lang->testaccount_statistics,
+        'description' => $lang->testaccount_statisticsdesc,
         'optionscode' => "yesno",
         'value' => 2,
         'disporder' => 7
@@ -153,7 +165,8 @@ rebuild_settings();
 
 function testaccount_activate()
 {
-global $db, $mybb;
+global $db, $mybb, $lang;
+$lang->load('testaccount');
 
 $query = $db->simple_select("users", "*", "username = 'test'");
 if($db->num_rows($query) != 0)
@@ -189,21 +202,21 @@ $db->insert_query("users", $user);
 $testacctemplate = '
 <html>
 <head>
-<title>{$mybb->settings[\'bbname\']} - Test Account Statistics</title>
+<title>{$mybb->settings[\'bbname\']} - {$lang->testaccount_title}</title>
 {$headerinclude}
 </head>
 <body>
 {$header}
 <table border="0" cellspacing="1" cellpadding="4" class="tborder">
 <tr>
-<td class="thead"><span class="smalltext"><strong>Statistics</strong></span></td>
+<td class="thead"><span class="smalltext"><strong>{$lang->testaccount_thead}</strong></span></td>
 </tr>
 <tr>
 <td class="trow1">
-MyBB Version: {$mybbv} <br />
-PHP Version: {$phpv} <br />
-Database: {$database} <br /> <br />
-<center><a href="{$mybb->settings[\'bburl\']/index.php?debug=1">Debugging Information</a><br />
+{$lang->testaccount_mybbv}: {$mybbv} <br />
+{$lang->testaccount_phpv}: {$phpv} <br />
+{$lang->testaccount_database}: {$database} <br /> <br />
+<center><a href="{$mybb->settings[\'bburl\']}/index.php?debug=1" class="button">{$lang->testaccount_debuginfo}</a><br />
 </td></tr></table>
 {$footer}
 </body>
@@ -226,7 +239,6 @@ function testaccount_deactivate()
 global $db, $cache, $gid;
 
 $query = $db->delete_query("users", "username = 'Test'");
-// $query = $db->delete_query("usergroups", "gid = $gid");
 $db->delete_query("templates", "title IN ('testaccount_statistics')");
 $cache->update_usergroups();
 }
@@ -235,7 +247,9 @@ $cache->update_usergroups();
 // Check if Test account can be logged into
 function testaccount_logincheck()
 {
-global $mybb;
+global $mybb, $lang;
+$lang->load('testaccount');
+
 	if($mybb->settings['testaccount_enable'] == 1 && $mybb->settings['testaccount_unlock'] == 0)
 	{
 		if($mybb->get_input('quick_username'))
@@ -247,7 +261,7 @@ global $mybb;
 
 		if($mybb->input['username'] == 'Test' || $mybb->input['username'] == 'test')
 		{
-			error("Username not allowed.");
+			error($lang->testaccount_logincheck);
 			die();
 		}
 	}
@@ -256,14 +270,15 @@ global $mybb;
 // Block change Email & Password 
 function testaccount_emailpass()
 {
-global $mybb, $db, $uid;
+global $mybb, $db, $uid, $lang;
+$lang->load('testaccount');
 
 if($mybb->get_input('action') == 'do_email' || $mybb->get_input('action') == 'do_password')
 {
 	if($mybb->user['username'] == 'Test')
 	{
 
-		error("You are not able to change your Email or Password.");
+		error($lang->testaccount_emailpass);
 	}
 }
 }
@@ -281,7 +296,7 @@ $mybb->settings['enablereputation'] = 0;
 function testaccount_debug()
 {
 global $mybb;
-if($mybb->settings['testaccount_enable'] == 1 && $mybb->user['username'] == 'Test')
+if($mybb->settings['testaccount_enable'] == 1 && $mybb->settings['testaccount_statistics'] == 1 && $mybb->user['username'] == 'Test')
 {
 $mybb->usergroup['cancp'] = 1;
 }
@@ -290,11 +305,12 @@ $mybb->usergroup['cancp'] = 1;
 
 function testaccount_permission()
 {
-global $db, $mybb, $uid;
+global $db, $mybb, $uid, $lang;
+$lang->load('testaccount');
 
 if($mybb->user['username'] == 'Test' && $mybb->settings['testaccount_enable'] == 1)
 	{
-	$error = 'You are not able to perform this action.';
+	$error = $lang->testaccount_permissionerror;
 
 		switch ($mybb->input['action']) {
 			case "do_newreply":
@@ -310,13 +326,13 @@ if($mybb->user['username'] == 'Test' && $mybb->settings['testaccount_enable'] ==
 				}
 				break;
 			case "do_editsig":
-				if($mybb->settings['testaccount_sigavatar'] != 3 || $mybb->settings['testaccount_sigavatar'] != 1)
+				if($mybb->settings['testaccount_sigavatar'] == 1 || $mybb->settings['testaccount_sigavatar'] == 3)
 				{
 					error($error);
 				}
 				break;
 			case "do_avatar":
-				if($mybb->settings['testaccount_sigavatar'] != 3 || $mybb->settings['testaccount_sigavatar'] != 0)
+				if($mybb->settings['testaccount_sigavatar'] == 0 || $mybb->settings['testaccount_sigavatar'] == 3)
 				{
 					error($error);
 				}
@@ -341,7 +357,8 @@ if($mybb->user['username'] == 'Test' && $mybb->settings['testaccount_enable'] ==
 
 function testaccount_settings()
 {
-global $mybb, $db;
+global $mybb, $db, $lang;
+$lang->load('testaccount');
 
 // Grab gid
 $query = $db->simple_select("settinggroups", "gid", "name = 'testaccount'");
@@ -355,7 +372,7 @@ if($mybb->get_input('module') == 'config-settings' && $mybb->get_input('action')
 	
 	if(empty($check['loginkey']))
 	{
-		flash_message('Please change Test account\'s password.', 'error');
+		flash_message($lang->testaccount_adminerror, 'error');
 	}
 
 
