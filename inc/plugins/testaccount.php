@@ -5,8 +5,10 @@ if(!defined("IN_MYBB"))
 {
 	die("What would you say if Die Hard was real life? Yippee ki-yay motherf*cker!");
 }
-
+// Password Notice
 $plugins->add_hook('admin_config_settings_change', 'testaccount_settings');
+
+// Login Control
 $plugins->add_hook('member_do_login_start', 'testaccount_logincheck');
 
 // Avatars & Signatures
@@ -14,6 +16,7 @@ $plugins->add_hook('usercp_do_editsig_start', 'testaccount_permission');
 $plugins->add_hook('usercp_do_avatar_start', 'testaccount_permission');
 
 // Reputation & PMs
+$plugins->add_hook('reputation_start', 'testaccount_reputation');
 $plugins->add_hook('private_send_do_send', 'testaccount_permission');
 
 // Emails & Passwords
@@ -31,7 +34,7 @@ function testaccount_info()
         "description"=> "Allows forum administrators to give out a test account with very limited permissions.<br /><br />
 		<span style=\"color: red;\">Note: Settings configured here will override usergroup permissions.</span>",
         "website"        => "https://oseax.com",
-        "author"        => "Wires",
+        "author"        => "Wires <i>(AndreRl)</i>",
         "authorsite"    => "https://oseax.com",
         "version"        => "1.0",
         "guid"             => "",
@@ -104,14 +107,6 @@ $setting_array = array(
         'value' => 2,
         'disporder' => 7
     ),
-	
-    'testaccount_acp' => array(
-        "title" => "Admin CP Access",
-        'description' => 'Can Test account access Admin CP?',
-        'optionscode' => "yesno",
-        'value' => 2,
-        'disporder' => 8
-    ),
 );
 
 foreach($setting_array as $name => $setting)
@@ -140,7 +135,7 @@ function testaccount_uninstall()
 {
 global $db;
 
-$db->delete_query('settings', "name IN ('testaccount_enable','testaccount_unlock','testaccount_usage', 'testaccount_posting', 'testaccount_sigavatar', 'testaccount_pms', 'testaccount_reputation', 'testaccount_acp')");
+$db->delete_query('settings', "name IN ('testaccount_enable','testaccount_unlock', 'testaccount_posting', 'testaccount_sigavatar', 'testaccount_pms', 'testaccount_reputation')");
 $db->delete_query('settinggroups', "name = 'testaccount'");
 
 rebuild_settings();
@@ -148,7 +143,7 @@ rebuild_settings();
 
 function testaccount_activate()
 {
-global $db, $mybb, $plugins;
+global $db, $mybb;
 
 $query = $db->simple_select("users", "*", "username = 'test'");
 if($db->num_rows($query) != 0)
@@ -179,6 +174,7 @@ $user = array(
 );
 
 $db->insert_query("users", $user);
+
 
 $testacctemplate = '
 <html>
@@ -216,10 +212,12 @@ $db->insert_query('templates', $testaccount_array);
 
 function testaccount_deactivate()
 {
-global $db;
+global $db, $cache, $gid;
 
-$query = $db->delete_query("users", "username = 'test'");
+$query = $db->delete_query("users", "username = 'Test'");
+// $query = $db->delete_query("usergroups", "gid = $gid");
 $db->delete_query("templates", "title IN ('testaccount_statistics')");
+$cache->update_usergroups();
 }
 
 
@@ -227,15 +225,15 @@ $db->delete_query("templates", "title IN ('testaccount_statistics')");
 function testaccount_logincheck()
 {
 global $mybb;
-
-	if($mybb->get_input('quick_password') && $mybb->get_input('quick_username'))
-	{
-		$mybb->input['username'] = $mybb->get_input('quick_username');
-	}
-
-	
 	if($mybb->settings['testaccount_enable'] == 1 && $mybb->settings['testaccount_unlock'] == 0)
 	{
+		if($mybb->get_input('quick_username'))
+		{
+			$mybb->input['username'] = $mybb->get_input('quick_username');
+		}
+
+	
+
 		if($mybb->input['username'] == 'Test' || $mybb->input['username'] == 'test')
 		{
 			error("Username not allowed.");
@@ -247,7 +245,7 @@ global $mybb;
 // Block change Email & Password 
 function testaccount_emailpass()
 {
-global $mybb, $db;
+global $mybb, $db, $uid;
 
 if($mybb->get_input('action') == 'do_email' || $mybb->get_input('action') == 'do_password')
 {
@@ -259,11 +257,21 @@ if($mybb->get_input('action') == 'do_email' || $mybb->get_input('action') == 'do
 }
 }
 
+function testaccount_reputation()
+{
+global $mybb;
+if($mybb->settings['testaccount_reputation'] == 0)
+{
+$mybb->settings['enablereputation'] = 0;
+
+}
+}
+
 // Rest of permissions
 
 function testaccount_permission()
 {
-global $db, $mybb;
+global $db, $mybb, $uid;
 
 if($mybb->user['username'] == 'Test' && $mybb->settings['testaccount_enable'] == 1)
 	{
@@ -305,6 +313,7 @@ if($mybb->user['username'] == 'Test' && $mybb->settings['testaccount_enable'] ==
 	
 }
 
+
 ///////////////////////////////////////////
 //////////////////////////////////////////
 //            ADMIN SECTION            //
@@ -323,12 +332,15 @@ if($mybb->get_input('module') == 'config-settings' && $mybb->get_input('action')
 {
 	// Lets check if default password has been changed
 	$query = $db->simple_select("users", "*", "username = 'Test'");
-	$check = $db->fetch_field($query, "loginkey");
-	if(empty($check))
+	$check = $db->fetch_array($query);
+	
+	if(empty($check['loginkey']))
 	{
-	flash_message('Please change Test account\'s password.', 'error');
+		flash_message('Please change Test account\'s password.', 'error');
 	}
-}
+
+
 }
 
-?>
+
+}
