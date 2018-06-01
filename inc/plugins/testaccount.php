@@ -8,8 +8,21 @@ if(!defined("IN_MYBB"))
 
 $plugins->add_hook('admin_config_settings_change', 'testaccount_settings');
 $plugins->add_hook('member_do_login_start', 'testaccount_logincheck');
-$plugins->add_hook('usercp_email', 'testaccount_emailpass');
-$plugins->add_hook('usercp_password', 'testaccount_emailpass');
+
+// Avatars & Signatures
+$plugins->add_hook('usercp_do_editsig_start', 'testaccount_permission');
+$plugins->add_hook('usercp_do_avatar_start', 'testaccount_permission');
+
+// Reputation & PMs
+$plugins->add_hook('private_send_do_send', 'testaccount_permission');
+
+// Emails & Passwords
+$plugins->add_hook('usercp_do_email_start', 'testaccount_permission');
+$plugins->add_hook('usercp_do_password_start', 'testaccount_permission');
+
+// Posting & Threads
+$plugins->add_hook('newreply_do_newreply_start', 'testaccount_permission');
+$plugins->add_hook('newthread_do_newthread_start', 'testaccount_permission');
 
 function testaccount_info()
 {
@@ -181,9 +194,9 @@ $testacctemplate = '
 </tr>
 <tr>
 <td class="trow1">
-
-
-
+MyBB Version: {$mybbv} <br />
+PHP Version: {$phpv} <br />
+Database: {$database} <br />
 </td></tr></table>
 {$footer}
 </body>
@@ -236,7 +249,7 @@ function testaccount_emailpass()
 {
 global $mybb, $db;
 
-if($mybb->get_input('action') == 'email' || $mybb->get_input('action') == 'password')
+if($mybb->get_input('action') == 'do_email' || $mybb->get_input('action') == 'do_password')
 {
 	if($mybb->user['username'] == 'Test')
 	{
@@ -246,7 +259,51 @@ if($mybb->get_input('action') == 'email' || $mybb->get_input('action') == 'passw
 }
 }
 
-// Lets create a page for statistics...
+// Rest of permissions
+
+function testaccount_permission()
+{
+global $db, $mybb;
+
+if($mybb->user['username'] == 'Test' && $mybb->settings['testaccount_enable'] == 1)
+	{
+	$error = 'You are not able to perform this action.';
+
+		switch ($mybb->input['action']) {
+			case "do_newreply":
+				if($mybb->settings['testaccount_posting'] != 1)
+				{
+					error($error);
+				}
+				break;
+			case "do_newthread":
+				if($mybb->settings['testaccount_posting'] != 1)
+				{
+					error($error);
+				}
+				break;
+			case "do_editsig":
+				if($mybb->settings['testaccount_sigavatar'] != 3 || $mybb->settings['testaccount_sigavatar'] != 1)
+				{
+					error($error);
+				}
+				break;
+			case "do_avatar":
+				if($mybb->settings['testaccount_sigavatar'] != 3 || $mybb->settings['testaccount_sigavatar'] != 0)
+				{
+					error($error);
+				}
+				break;
+			case "do_send":
+				if($mybb->settings['testaccount_pms'] != 1)
+				{
+					error($error);
+				}
+				break;
+		}
+	}
+	
+}
 
 ///////////////////////////////////////////
 //////////////////////////////////////////
