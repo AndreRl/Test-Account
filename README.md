@@ -10,7 +10,7 @@ General
 
 MyBB Plugin - Constantly find yourself requesting help for your forum? This plugin allows forum administrators to give out a test account with very limited permissions. Permissions given within the plugin may override usergroup permissions.
 
-Planned Features
+Features
 -----------
 The features to be implemented are as follows:
 
