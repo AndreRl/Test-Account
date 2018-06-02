@@ -256,7 +256,7 @@ return $user;
 // Check if Test account can be logged into
 function testaccount_logincheck()
 {
-global $mybb, $lang, $db;
+global $mybb, $lang;
 $lang->load('testaccount');
 
 	if($mybb->settings['testaccount_enable'] == 1 && $mybb->settings['testaccount_unlock'] == 0)
