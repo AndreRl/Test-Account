@@ -1,7 +1,7 @@
 Test-Account
 ================
 
-Current Version: 1.00 (Dev)
+Current Version: 1.00
 
 Author: [Wires (AndreRl)](https://oseax.com)
 
