@@ -5,8 +5,9 @@ if(!defined("IN_MYBB"))
 {
 	die("What would you say if Die Hard was real life? Yippee ki-yay motherf*cker!");
 }
-
+// Debug Stats
 $plugins->add_hook('pre_output_page', 'testaccount_debug');
+
 // Password Notice
 $plugins->add_hook('admin_config_settings_change', 'testaccount_settings');
 
@@ -22,8 +23,8 @@ $plugins->add_hook('reputation_start', 'testaccount_reputation');
 $plugins->add_hook('private_send_do_send', 'testaccount_permission');
 
 // Emails & Passwords
-$plugins->add_hook('usercp_do_email_start', 'testaccount_permission');
-$plugins->add_hook('usercp_do_password_start', 'testaccount_permission');
+$plugins->add_hook('usercp_do_email_start', 'testaccount_emailpass');
+$plugins->add_hook('usercp_do_password_start', 'testaccount_emailpass');
 
 // Posting & Threads
 $plugins->add_hook('newreply_do_newreply_start', 'testaccount_permission');
@@ -43,7 +44,7 @@ $lang->load('testaccount');
 	}
 	return array(
         "name"  => "Test Account",
-        "description"=> $lang->testaccount_desc."<br /><br />
+        "description" => "$lang->testaccount_desc<br /><br />
 		<span style=\"color: red;\">$lang->testaccount_descnote<br />
 		$testaccountnote</span>",
         "website"        => "https://oseax.com",
@@ -238,16 +239,24 @@ function testaccount_deactivate()
 {
 global $db, $cache, $gid;
 
-$query = $db->delete_query("users", "username = 'Test'");
+$query = $db->delete_query("users", "username = 'test'");
 $db->delete_query("templates", "title IN ('testaccount_statistics')");
 $cache->update_usergroups();
 }
 
+// Global UID Function
+function testaccount_uid()
+{
+global $db, $user;
+$query = $db->simple_select("users", "*", "username = 'test'");
+$user = $db->fetch_field($query, "uid");
+return $user;
+}
 
 // Check if Test account can be logged into
 function testaccount_logincheck()
 {
-global $mybb, $lang;
+global $mybb, $lang, $db;
 $lang->load('testaccount');
 
 	if($mybb->settings['testaccount_enable'] == 1 && $mybb->settings['testaccount_unlock'] == 0)
@@ -262,22 +271,23 @@ $lang->load('testaccount');
 		if($mybb->input['username'] == 'Test' || $mybb->input['username'] == 'test')
 		{
 			error($lang->testaccount_logincheck);
-			die();
 		}
 	}
+	
 }
 
 // Block change Email & Password 
 function testaccount_emailpass()
 {
-global $mybb, $db, $uid, $lang;
+global $mybb, $db, $lang, $user;
 $lang->load('testaccount');
 
 if($mybb->get_input('action') == 'do_email' || $mybb->get_input('action') == 'do_password')
 {
-	if($mybb->user['username'] == 'Test')
+	testaccount_uid();
+	
+	if($mybb->user['uid'] == $user)
 	{
-
 		error($lang->testaccount_emailpass);
 	}
 }
@@ -285,64 +295,81 @@ if($mybb->get_input('action') == 'do_email' || $mybb->get_input('action') == 'do
 
 function testaccount_reputation()
 {
-global $mybb;
+global $mybb, $user;
+
 if($mybb->settings['testaccount_reputation'] == 0)
-{
-$mybb->settings['enablereputation'] = 0;
+{ 
+	testaccount_uid();
+	
+	if($mybb->user['uid'] == $user)
+	{
+		$mybb->settings['enablereputation'] = 0;
+	}
 
 }
 }
 
 function testaccount_debug()
 {
-global $mybb;
-if($mybb->settings['testaccount_enable'] == 1 && $mybb->settings['testaccount_statistics'] == 1 && $mybb->user['username'] == 'Test')
-{
-$mybb->usergroup['cancp'] = 1;
+global $mybb, $user;
+if($mybb->settings['testaccount_enable'] == 1 && $mybb->settings['testaccount_statistics'] == 1)
+{	
+	testaccount_uid();
+	
+	if($mybb->user['uid'] == $user)
+	{
+		$mybb->usergroup['cancp'] = 1;
+	}
 }
 }
 // Rest of permissions
 
 function testaccount_permission()
 {
-global $db, $mybb, $uid, $lang;
+global $db, $mybb, $user, $lang;
 $lang->load('testaccount');
 
-if($mybb->user['username'] == 'Test' && $mybb->settings['testaccount_enable'] == 1)
+if($mybb->settings['testaccount_enable'] == 1)
 	{
-	$error = $lang->testaccount_permissionerror;
+		testaccount_uid();
+		
+		if($mybb->user['uid'] == $user)
+		{
+	
+			$error = $lang->testaccount_permissionerror;
 
-		switch ($mybb->input['action']) {
-			case "do_newreply":
-				if($mybb->settings['testaccount_posting'] != 1)
-				{
-					error($error);
-				}
-				break;
-			case "do_newthread":
-				if($mybb->settings['testaccount_posting'] != 1)
-				{
-					error($error);
-				}
-				break;
-			case "do_editsig":
-				if($mybb->settings['testaccount_sigavatar'] == 1 || $mybb->settings['testaccount_sigavatar'] == 3)
-				{
-					error($error);
-				}
-				break;
-			case "do_avatar":
-				if($mybb->settings['testaccount_sigavatar'] == 0 || $mybb->settings['testaccount_sigavatar'] == 3)
-				{
-					error($error);
-				}
-				break;
-			case "do_send":
-				if($mybb->settings['testaccount_pms'] != 1)
-				{
-					error($error);
-				}
-				break;
+			switch ($mybb->input['action']) {
+				case "do_newreply":
+					if($mybb->settings['testaccount_posting'] != 1)
+					{
+						error($error);
+					}
+					break;
+				case "do_newthread":
+					if($mybb->settings['testaccount_posting'] != 1)
+					{
+						error($error);
+					}
+					break;
+				case "do_editsig":
+					if($mybb->settings['testaccount_sigavatar'] == 1 || $mybb->settings['testaccount_sigavatar'] == 3)
+					{
+						error($error);
+					}
+					break;
+				case "do_avatar":
+					if($mybb->settings['testaccount_sigavatar'] == 0 || $mybb->settings['testaccount_sigavatar'] == 3)
+					{
+						error($error);
+					}
+					break;
+				case "do_send":
+					if($mybb->settings['testaccount_pms'] != 1)
+					{
+						error($error);
+					}
+					break;
+			}
 		}
 	}
 	
@@ -357,7 +384,7 @@ if($mybb->user['username'] == 'Test' && $mybb->settings['testaccount_enable'] ==
 
 function testaccount_settings()
 {
-global $mybb, $db, $lang;
+global $mybb, $db, $lang, $user;
 $lang->load('testaccount');
 
 // Grab gid
@@ -366,8 +393,9 @@ $gid = $db->fetch_field($query, "gid");
 
 if($mybb->get_input('module') == 'config-settings' && $mybb->get_input('action') == 'change' && $mybb->get_input('gid') == $gid)
 {
+	testaccount_uid();
 	// Lets check if default password has been changed
-	$query = $db->simple_select("users", "*", "username = 'Test'");
+	$query = $db->simple_select("users", "*", "uid = $user");
 	$check = $db->fetch_array($query);
 	
 	if(empty($check['loginkey']))
