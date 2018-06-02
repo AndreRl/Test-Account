@@ -12,7 +12,7 @@ add_breadcrumb("Test Account - Statistics", "testaccount.php");
 // Lets check who we're dealing with
 
 $user = get_user($mybb->user['uid']);
-if($user['username'] != 'Test')
+if($user['uid'] != TESTP_UID)
 {
 	error_no_permission();
 } else if($mybb->settings['testaccount_enable'] != 1)
@@ -24,7 +24,6 @@ if($user['username'] != 'Test')
 }
 
 // Lets define some variables
-
 $mybbv = $mybb->version;
 $phpv = phpversion();
 
